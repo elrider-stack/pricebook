@@ -47,12 +47,31 @@ class _HomeScreenState extends State<HomeScreen> {
     loadProducts();
   }
 
-  Future<void> deleteProduct(Product product) async {
+  Future<void> confirmDelete(Product product) async {
     if (product.id == null) return;
 
-    await DatabaseHelper.instance.deleteProduct(product.id!);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text('Delete "${product.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
 
-    loadProducts();
+    if (result == true) {
+      await DatabaseHelper.instance.deleteProduct(product.id!);
+      loadProducts();
+    }
   }
 
   @override
@@ -87,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           trailing: Text(
                             '₦${product.price.toStringAsFixed(2)}',
                           ),
-                          onLongPress: () => deleteProduct(product),
+                          onLongPress: () => confirmDelete(product),
                         ),
                       );
                     },
