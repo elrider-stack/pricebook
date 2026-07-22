@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'add_product_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -11,7 +13,12 @@ class HomeScreen extends StatelessWidget {
         child: Text('No products yet', style: TextStyle(fontSize: 18)),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddProductScreen()),
+          );
+        },
         child: const Icon(Icons.add),
       ),
     );
