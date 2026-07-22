@@ -26,10 +26,10 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE products(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            price REAL NOT NULL,
-            category TEXT NOT NULL,
-            createdAt TEXT NOT NULL
+            name TEXT,
+            price REAL,
+            category TEXT,
+            createdAt TEXT
           )
         ''');
       },
@@ -38,15 +38,20 @@ class DatabaseHelper {
 
   Future<int> insertProduct(Product product) async {
     final db = await database;
-
     return db.insert('products', product.toMap());
   }
 
   Future<List<Product>> getProducts() async {
     final db = await database;
 
-    final result = await db.query('products', orderBy: 'name ASC');
+    final maps = await db.query('products', orderBy: 'id DESC');
 
-    return result.map((e) => Product.fromMap(e)).toList();
+    return maps.map(Product.fromMap).toList();
+  }
+
+  Future<int> deleteProduct(int id) async {
+    final db = await database;
+
+    return db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 }

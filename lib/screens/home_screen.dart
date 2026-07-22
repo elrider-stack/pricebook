@@ -47,6 +47,14 @@ class _HomeScreenState extends State<HomeScreen> {
     loadProducts();
   }
 
+  Future<void> deleteProduct(Product product) async {
+    if (product.id == null) return;
+
+    await DatabaseHelper.instance.deleteProduct(product.id!);
+
+    loadProducts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,28 +74,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Expanded(
             child: filteredProducts.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No products found',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  )
+                ? const Center(child: Text('No products found'))
                 : ListView.builder(
                     itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = filteredProducts[index];
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
                         child: ListTile(
                           title: Text(product.name),
                           subtitle: Text(product.category),
                           trailing: Text(
                             '₦${product.price.toStringAsFixed(2)}',
                           ),
+                          onLongPress: () => deleteProduct(product),
                         ),
                       );
                     },
