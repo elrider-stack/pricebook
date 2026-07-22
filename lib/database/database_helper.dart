@@ -1,6 +1,8 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../models/product.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
 
@@ -34,8 +36,14 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<int> insertProduct(Product product) async {
+    final db = await instance.database;
+
+    return await db.insert('products', product.toMap());
+  }
+
   Future<void> close() async {
     final db = await instance.database;
-    db.close();
+    await db.close();
   }
 }
