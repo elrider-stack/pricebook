@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../database/database_helper.dart';
-import '../models/product.dart';
-import 'add_product_screen.dart';
+import '../providers/product_provider.dart';
+import '../screens/add_product_screen.dart';
+import '../widgets/product_tile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,70 +13,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Product> products = [];
-  List<Product> filteredProducts = [];
-
   @override
   void initState() {
     super.initState();
-    loadProducts();
-  }
 
-  Future<void> loadProducts() async {
-    final data = await DatabaseHelper.instance.getProducts();
-
-    setState(() {
-      products = data;
-      filteredProducts = data;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ProductProvider>().loadProducts();
     });
-  }
-
-  void searchProducts(String value) {
-    setState(() {
-      filteredProducts = products.where((product) {
-        return product.name.toLowerCase().contains(value.toLowerCase());
-      }).toList();
-    });
-  }
-
-  Future<void> openAddProduct() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AddProductScreen()),
-    );
-
-    loadProducts();
-  }
-
-  Future<void> confirmDelete(Product product) async {
-    if (product.id == null) return;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: Text('Delete "${product.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      await DatabaseHelper.instance.deleteProduct(product.id!);
-      loadProducts();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ProductProvider>();
+
     return Scaffold(
       appBar: AppBar(title: const Text('PriceBook'), centerTitle: true),
       body: Column(
@@ -88,26 +39,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
-              onChanged: searchProducts,
+              onChanged: provider.search,
             ),
           ),
           Expanded(
-            child: filteredProducts.isEmpty
+            child: provider.products.isEmpty
                 ? const Center(child: Text('No products found'))
                 : ListView.builder(
-                    itemCount: filteredProducts.length,
+                    itemCount: provider.products.length,
                     itemBuilder: (context, index) {
-                      final product = filteredProducts[index];
-
-                      return Card(
-                        child: ListTile(
-                          title: Text(product.name),
-                          subtitle: Text(product.category),
-                          trailing: Text(
-                            '₦${product.price.toStringAsFixed(2)}',
-                          ),
-                          onLongPress: () => confirmDelete(product),
-                        ),
+                      return ProductTile(
+                        product: provider.products[index],
+                        onRefresh: provider.loadProducts,
                       );
                     },
                   ),
@@ -115,7 +58,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: openAddProduct,
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddProductScreen()),
+          );
+
+          if (!mounted) return;
+          provider.loadProducts();
+        },
         child: const Icon(Icons.add),
       ),
     );
