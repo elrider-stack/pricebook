@@ -4,7 +4,9 @@ import '../database/database_helper.dart';
 import '../models/product.dart';
 
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+  final Product? product;
+
+  const AddProductScreen({super.key, this.product});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -16,30 +18,60 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   String _category = 'Food';
 
-  Future<void> _saveProduct() async {
-    if (_nameController.text.trim().isEmpty ||
-        _priceController.text.trim().isEmpty) {
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.product != null) {
+      _nameController.text = widget.product!.name;
+      _priceController.text = widget.product!.price.toString();
+      _category = widget.product!.category;
+    }
+  }
+
+  Future<void> saveProduct() async {
+    final name = _nameController.text.trim();
+    final price = double.tryParse(_priceController.text);
+
+    if (name.isEmpty || price == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter valid product details')),
+      );
       return;
     }
 
     final product = Product(
-      name: _nameController.text.trim(),
-      price: double.parse(_priceController.text),
+      id: widget.product?.id,
+      name: name,
+      price: price,
       category: _category,
-      createdAt: DateTime.now().toIso8601String(),
+      createdAt: widget.product?.createdAt ?? DateTime.now().toIso8601String(),
     );
 
-    await DatabaseHelper.instance.insertProduct(product);
+    if (widget.product == null) {
+      await DatabaseHelper.instance.insertProduct(product);
+    } else {
+      await DatabaseHelper.instance.updateProduct(product);
+    }
 
-    if (!mounted) return;
+    if (mounted) {
+      Navigator.pop(context);
+    }
+  }
 
-    Navigator.pop(context);
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final editing = widget.product != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Product')),
+      appBar: AppBar(title: Text(editing ? 'Edit Product' : 'Add Product')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -72,8 +104,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 DropdownMenuItem(value: 'Drinks', child: Text('Drinks')),
               ],
               onChanged: (value) {
+                if (value == null) return;
+
                 setState(() {
-                  _category = value!;
+                  _category = value;
                 });
               },
             ),
@@ -81,8 +115,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _saveProduct,
-                child: const Text('Save Product'),
+                onPressed: saveProduct,
+                child: Text(editing ? 'Update Product' : 'Save Product'),
               ),
             ),
           ],
