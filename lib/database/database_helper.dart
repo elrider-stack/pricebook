@@ -50,6 +50,36 @@ class DatabaseHelper {
     return result.map((e) => Product.fromMap(e)).toList();
   }
 
+  Future<List<Product>> searchProducts(String keyword) async {
+    final db = await instance.database;
+
+    final result = await db.query(
+      'products',
+      where: 'name LIKE ?',
+      whereArgs: ['%$keyword%'],
+      orderBy: 'name ASC',
+    );
+
+    return result.map((e) => Product.fromMap(e)).toList();
+  }
+
+  Future<int> updateProduct(Product product) async {
+    final db = await instance.database;
+
+    return await db.update(
+      'products',
+      product.toMap(),
+      where: 'id = ?',
+      whereArgs: [product.id],
+    );
+  }
+
+  Future<int> deleteProduct(int id) async {
+    final db = await instance.database;
+
+    return await db.delete('products', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<void> close() async {
     final db = await instance.database;
     await db.close();
