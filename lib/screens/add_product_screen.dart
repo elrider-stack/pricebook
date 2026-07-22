@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../database/database_helper.dart';
+import '../models/product.dart';
+
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
 
@@ -12,6 +15,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _priceController = TextEditingController();
 
   String _category = 'Food';
+
+  Future<void> _saveProduct() async {
+    if (_nameController.text.trim().isEmpty ||
+        _priceController.text.trim().isEmpty) {
+      return;
+    }
+
+    final product = Product(
+      name: _nameController.text.trim(),
+      price: double.parse(_priceController.text),
+      category: _category,
+      createdAt: DateTime.now().toIso8601String(),
+    );
+
+    await DatabaseHelper.instance.insertProduct(product);
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +81,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _saveProduct,
                 child: const Text('Save Product'),
               ),
             ),
