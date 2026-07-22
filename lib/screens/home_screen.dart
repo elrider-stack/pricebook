@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/product_provider.dart';
-import 'add_product_screen.dart';
 import '../widgets/product_tile.dart';
+import 'add_product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +18,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
       context.read<ProductProvider>().loadProducts();
     });
   }
@@ -28,7 +27,29 @@ class _HomeScreenState extends State<HomeScreen> {
     final provider = context.watch<ProductProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PriceBook'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('PriceBook'),
+        centerTitle: true,
+        actions: [
+          PopupMenuButton<SortType>(
+            icon: const Icon(Icons.sort),
+            onSelected: provider.sortProducts,
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: SortType.newest, child: Text('Newest')),
+              PopupMenuItem(value: SortType.oldest, child: Text('Oldest')),
+              PopupMenuItem(value: SortType.name, child: Text('Name A-Z')),
+              PopupMenuItem(
+                value: SortType.priceLow,
+                child: Text('Price Low-High'),
+              ),
+              PopupMenuItem(
+                value: SortType.priceHigh,
+                child: Text('Price High-Low'),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -60,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? const Center(child: Text('No products found'))
                 : ListView.builder(
                     itemCount: provider.products.length,
-                    itemBuilder: (context, index) {
+                    itemBuilder: (_, index) {
                       return ProductTile(
                         product: provider.products[index],
                         onRefresh: provider.loadProducts,
