@@ -39,6 +39,14 @@ class DatabaseHelper {
   Future<int> insertProduct(Product product) async {
     final db = await database;
 
-    return await db.insert('products', product.toMap());
+    return db.insert('products', product.toMap());
+  }
+
+  Future<List<Product>> getProducts() async {
+    final db = await database;
+
+    final result = await db.query('products', orderBy: 'name ASC');
+
+    return result.map((e) => Product.fromMap(e)).toList();
   }
 }
