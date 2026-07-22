@@ -13,6 +13,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Product> products = [];
+  List<Product> filteredProducts = [];
 
   @override
   void initState() {
@@ -25,6 +26,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() {
       products = data;
+      filteredProducts = data;
+    });
+  }
+
+  void searchProducts(String value) {
+    setState(() {
+      filteredProducts = products.where((product) {
+        return product.name.toLowerCase().contains(value.toLowerCase());
+      }).toList();
     });
   }
 
@@ -41,28 +51,50 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('PriceBook'), centerTitle: true),
-      body: products.isEmpty
-          ? const Center(
-              child: Text('No products yet', style: TextStyle(fontSize: 18)),
-            )
-          : ListView.builder(
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index];
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: ListTile(
-                    title: Text(product.name),
-                    subtitle: Text(product.category),
-                    trailing: Text('₦${product.price.toStringAsFixed(2)}'),
-                  ),
-                );
-              },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Search product...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: searchProducts,
             ),
+          ),
+          Expanded(
+            child: filteredProducts.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No products found',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = filteredProducts[index];
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        child: ListTile(
+                          title: Text(product.name),
+                          subtitle: Text(product.category),
+                          trailing: Text(
+                            '₦${product.price.toStringAsFixed(2)}',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: openAddProduct,
         child: const Icon(Icons.add),
