@@ -6,7 +6,7 @@ import '../screens/add_product_screen.dart';
 
 class ProductTile extends StatelessWidget {
   final Product product;
-  final VoidCallback onRefresh;
+  final Future<void> Function() onRefresh;
 
   const ProductTile({
     super.key,
@@ -14,34 +14,44 @@ class ProductTile extends StatelessWidget {
     required this.onRefresh,
   });
 
-  Future<void> deleteProduct(BuildContext context) async {
+  Future<void> _deleteProduct(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: const Text('Are you sure you want to delete this product?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Product'),
+          content: const Text('Are you sure you want to delete this product?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
 
-    if (confirm == true) {
-      await DatabaseHelper.instance.deleteProduct(product.id!);
-      onRefresh();
-    }
+    if (confirm != true) return;
+
+    await DatabaseHelper.instance.deleteProduct(product.id!);
+
+    await onRefresh();
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Product deleted')));
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
         title: Text(product.name),
         subtitle: Text(
@@ -59,12 +69,13 @@ class ProductTile extends StatelessWidget {
                     builder: (_) => AddProductScreen(product: product),
                   ),
                 );
-                onRefresh();
+
+                await onRefresh();
               },
             ),
             IconButton(
               icon: const Icon(Icons.delete),
-              onPressed: () => deleteProduct(context),
+              onPressed: () => _deleteProduct(context),
             ),
           ],
         ),
