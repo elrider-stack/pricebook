@@ -4,22 +4,26 @@ import '../database/database_helper.dart';
 import '../models/product.dart';
 
 class ProductProvider extends ChangeNotifier {
-  List<Product> _products = [];
-  List<Product> _filteredProducts = [];
+  final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
 
-  List<Product> get products => _filteredProducts;
+  List<Product> _products = [];
+  List<Product> _allProducts = [];
+
+  List<Product> get products => _products;
+
+  int get totalProducts => _allProducts.length;
 
   Future<void> loadProducts() async {
-    _products = await DatabaseHelper.instance.getProducts();
-    _filteredProducts = List.from(_products);
+    _allProducts = await _databaseHelper.getProducts();
+    _products = List.from(_allProducts);
     notifyListeners();
   }
 
   void search(String keyword) {
-    if (keyword.isEmpty) {
-      _filteredProducts = List.from(_products);
+    if (keyword.trim().isEmpty) {
+      _products = List.from(_allProducts);
     } else {
-      _filteredProducts = _products.where((product) {
+      _products = _allProducts.where((product) {
         return product.name.toLowerCase().contains(keyword.toLowerCase());
       }).toList();
     }

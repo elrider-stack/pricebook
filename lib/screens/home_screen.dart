@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/product_provider.dart';
-import '../screens/add_product_screen.dart';
+import 'add_product_screen.dart';
 import '../widgets/product_tile.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,6 +31,19 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(title: const Text('PriceBook'), centerTitle: true),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Total Products: ${provider.totalProducts}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
@@ -65,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
 
           if (!mounted) return;
+
           provider.loadProducts();
         },
         child: const Icon(Icons.add),
