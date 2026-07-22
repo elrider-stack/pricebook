@@ -14,40 +14,6 @@ class ProductTile extends StatelessWidget {
     required this.onRefresh,
   });
 
-  Future<void> _deleteProduct(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Product'),
-          content: const Text('Are you sure you want to delete this product?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm != true) return;
-
-    await DatabaseHelper.instance.deleteProduct(product.id!);
-
-    await onRefresh();
-
-    if (!context.mounted) return;
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Product deleted')));
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -74,8 +40,32 @@ class ProductTile extends StatelessWidget {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () => _deleteProduct(context),
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Delete Product'),
+                    content: Text('Delete "${product.name}"?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await DatabaseHelper.instance.deleteProduct(product.id!);
+
+                  await onRefresh();
+                }
+              },
             ),
           ],
         ),
