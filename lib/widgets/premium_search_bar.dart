@@ -9,16 +9,16 @@ class PremiumSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       onChanged: onChanged,
+      textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: 'Search products...',
         prefixIcon: const Icon(Icons.search_rounded),
+        suffixIcon: const Icon(Icons.tune_rounded),
         filled: true,
-        fillColor: Theme.of(context).cardColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
       ),
     );
   }
