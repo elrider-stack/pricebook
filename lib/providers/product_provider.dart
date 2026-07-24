@@ -9,6 +9,9 @@ class ProductProvider extends ChangeNotifier {
   List<Product> _allProducts = [];
   List<Product> _products = [];
 
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+
   SortType _sortType = SortType.newest;
 
   List<Product> get products => _products;
@@ -17,27 +20,23 @@ class ProductProvider extends ChangeNotifier {
 
   SortType get sortType => _sortType;
 
+  String get selectedCategory => _selectedCategory;
+
+  final List<String> categories = ['All', 'Food', 'Snacks', 'Drinks', 'Goods'];
+
   Future<void> loadProducts() async {
     _allProducts = await DatabaseHelper.instance.getProducts();
-    _products = List.from(_allProducts);
-
-    sortProducts(_sortType, notify: false);
-
-    notifyListeners();
+    _applyFilters();
   }
 
   void search(String query) {
-    if (query.isEmpty) {
-      _products = List.from(_allProducts);
-    } else {
-      _products = _allProducts.where((product) {
-        return product.name.toLowerCase().contains(query.toLowerCase());
-      }).toList();
-    }
+    _searchQuery = query;
+    _applyFilters();
+  }
 
-    sortProducts(_sortType, notify: false);
-
-    notifyListeners();
+  void selectCategory(String category) {
+    _selectedCategory = category;
+    _applyFilters();
   }
 
   void sortProducts(SortType type, {bool notify = true}) {
@@ -68,5 +67,22 @@ class ProductProvider extends ChangeNotifier {
     if (notify) {
       notifyListeners();
     }
+  }
+
+  void _applyFilters() {
+    _products = _allProducts.where((product) {
+      final matchesSearch = product.name.toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
+
+      final matchesCategory =
+          _selectedCategory == 'All' || product.category == _selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    }).toList();
+
+    sortProducts(_sortType, notify: false);
+
+    notifyListeners();
   }
 }

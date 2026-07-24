@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/product_provider.dart';
+import '../widgets/dashboard_card.dart';
+import '../widgets/premium_search_bar.dart';
+import '../widgets/category_chip.dart';
 import '../widgets/product_tile.dart';
 import 'add_product_screen.dart';
 
@@ -18,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<ProductProvider>().loadProducts();
     });
   }
@@ -28,94 +32,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PriceBook'),
-        centerTitle: true,
+        centerTitle: false,
+        title: const Text("Haidar's Shop"),
         actions: [
           PopupMenuButton<SortType>(
-            icon: const Icon(Icons.sort),
+            icon: const Icon(Icons.sort_rounded),
             onSelected: provider.sortProducts,
             itemBuilder: (_) => const [
               PopupMenuItem(value: SortType.newest, child: Text('Newest')),
               PopupMenuItem(value: SortType.oldest, child: Text('Oldest')),
-              PopupMenuItem(value: SortType.name, child: Text('Name A-Z')),
-              PopupMenuItem(
-                value: SortType.priceLow,
-                child: Text('Price Low-High'),
-              ),
-              PopupMenuItem(
-                value: SortType.priceHigh,
-                child: Text('Price High-Low'),
-              ),
+              PopupMenuItem(value: SortType.name, child: Text('Name')),
+              PopupMenuItem(value: SortType.priceLow, child: Text('Price ↑')),
+              PopupMenuItem(value: SortType.priceHigh, child: Text('Price ↓')),
             ],
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Total Products: ${provider.totalProducts}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search product...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: provider.search,
-            ),
-          ),
-          Expanded(
-            child: provider.products.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 80,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'No products yet',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Tap the + button to add your first product.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: provider.products.length,
-                    itemBuilder: (_, index) {
-                      return ProductTile(
-                        product: provider.products[index],
-                        onRefresh: provider.loadProducts,
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
+
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
             context,
@@ -126,7 +60,98 @@ class _HomeScreenState extends State<HomeScreen> {
 
           provider.loadProducts();
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Product'),
+      ),
+
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              'Welcome 👋',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+
+            const SizedBox(height: 6),
+
+            Text(
+              'Manage your products professionally.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+
+            const SizedBox(height: 20),
+
+            DashboardCard(
+              icon: Icons.inventory_2_rounded,
+              title: 'Total Products',
+              value: provider.totalProducts.toString(),
+              color: Theme.of(context).colorScheme.primary,
+            ),
+
+            const SizedBox(height: 20),
+
+            PremiumSearchBar(onChanged: provider.search),
+
+            const SizedBox(height: 18),
+
+            SizedBox(
+              height: 42,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: provider.categories
+                    .map(
+                      (category) => CategoryChip(
+                        label: category,
+                        selected: provider.selectedCategory == category,
+                        onTap: () {
+                          provider.selectCategory(category);
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Text('Products', style: Theme.of(context).textTheme.titleLarge),
+
+            const SizedBox(height: 12),
+
+            if (provider.products.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 60),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.inventory_2_outlined, size: 72),
+                      SizedBox(height: 16),
+                      Text(
+                        'No products found',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Tap "Add Product" to create your first item.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...provider.products.map(
+                (product) => ProductTile(
+                  product: product,
+                  onRefresh: provider.loadProducts,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

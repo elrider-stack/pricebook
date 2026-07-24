@@ -2,26 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/product_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
+import 'themes/app_theme.dart';
 
 void main() {
-  runApp(const PriceBookApp());
+  runApp(const HaidarsShopApp());
 }
 
-class PriceBookApp extends StatelessWidget {
-  const PriceBookApp({super.key});
+class HaidarsShopApp extends StatelessWidget {
+  const HaidarsShopApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProductProvider(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'PriceBook',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        ),
-        home: const HomeScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: "Haidar's Shop",
+
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeProvider.themeMode,
+
+            home: const HomeScreen(),
+          );
+        },
       ),
     );
   }
