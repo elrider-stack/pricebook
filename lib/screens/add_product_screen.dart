@@ -13,8 +13,10 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  final _name = TextEditingController();
+  final _price = TextEditingController();
 
   String _category = 'Food';
 
@@ -23,46 +25,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.initState();
 
     if (widget.product != null) {
-      _nameController.text = widget.product!.name;
-      _priceController.text = widget.product!.price.toString();
+      _name.text = widget.product!.name;
+      _price.text = widget.product!.price.toString();
       _category = widget.product!.category;
-    }
-  }
-
-  Future<void> saveProduct() async {
-    final name = _nameController.text.trim();
-    final price = double.tryParse(_priceController.text);
-
-    if (name.isEmpty || price == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter valid product details')),
-      );
-      return;
-    }
-
-    final product = Product(
-      id: widget.product?.id,
-      name: name,
-      price: price,
-      category: _category,
-      createdAt: widget.product?.createdAt ?? DateTime.now().toIso8601String(),
-    );
-
-    if (widget.product == null) {
-      await DatabaseHelper.instance.insertProduct(product);
-    } else {
-      await DatabaseHelper.instance.updateProduct(product);
-    }
-
-    if (mounted) {
-      Navigator.pop(context);
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
+    _name.dispose();
+    _price.dispose();
     super.dispose();
   }
 
@@ -73,53 +45,91 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(editing ? 'Edit Product' : 'Add Product')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Product Name',
-                border: OutlineInputBorder(),
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _name,
+                decoration: const InputDecoration(
+                  labelText: 'Product Name',
+                  prefixIcon: Icon(Icons.inventory_2),
+                ),
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _priceController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Price',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _category,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: const [
-                DropdownMenuItem(value: 'Food', child: Text('Food')),
-                DropdownMenuItem(value: 'Snacks', child: Text('Snacks')),
-                DropdownMenuItem(value: 'Drinks', child: Text('Drinks')),
-              ],
-              onChanged: (value) {
-                if (value == null) return;
 
-                setState(() {
-                  _category = value;
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: saveProduct,
-                child: Text(editing ? 'Update Product' : 'Save Product'),
+              const SizedBox(height: 18),
+
+              TextFormField(
+                controller: _price,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Price',
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
-            ),
-          ],
+
+              const SizedBox(height: 18),
+
+              DropdownButtonFormField<String>(
+                initialValue: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  prefixIcon: Icon(Icons.category),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Food', child: Text('Food')),
+                  DropdownMenuItem(value: 'Drinks', child: Text('Drinks')),
+                  DropdownMenuItem(value: 'Snacks', child: Text('Snacks')),
+                  DropdownMenuItem(value: 'Goods', child: Text('Goods')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _category = value);
+                  }
+                },
+              ),
+
+              const SizedBox(height: 30),
+
+              FilledButton.icon(
+                icon: Icon(
+                  editing ? Icons.save_rounded : Icons.add_circle_outline,
+                ),
+                label: Text(editing ? 'Save Changes' : 'Add Product'),
+                onPressed: () async {
+                  if (!_formKey.currentState!.validate()) {
+                    return;
+                  }
+
+                  final product = Product(
+                    id: widget.product?.id,
+                    name: _name.text.trim(),
+                    price: double.parse(_price.text),
+                    category: _category,
+                    imagePath: widget.product?.imagePath ?? '',
+                    favorite: widget.product?.favorite ?? false,
+                    createdAt:
+                        widget.product?.createdAt ??
+                        DateTime.now().toIso8601String(),
+                  );
+
+                  if (editing) {
+                    await DatabaseHelper.instance.updateProduct(product);
+                  } else {
+                    await DatabaseHelper.instance.insertProduct(product);
+                  }
+
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
