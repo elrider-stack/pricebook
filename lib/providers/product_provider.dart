@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/categories.dart';
 import '../database/database_helper.dart';
 import '../models/product.dart';
 
@@ -16,13 +17,15 @@ class ProductProvider extends ChangeNotifier {
 
   List<Product> get products => _products;
 
-  int get totalProducts => _products.length;
+  int get totalProducts => _allProducts.length;
+
+  int get favoriteCount => _allProducts.where((e) => e.favorite).length;
 
   SortType get sortType => _sortType;
 
   String get selectedCategory => _selectedCategory;
 
-  final List<String> categories = ['All', 'Food', 'Snacks', 'Drinks', 'Goods'];
+  List<String> get categories => Categories.defaultCategories;
 
   Future<void> loadProducts() async {
     _allProducts = await DatabaseHelper.instance.getProducts();
@@ -71,14 +74,15 @@ class ProductProvider extends ChangeNotifier {
 
   void _applyFilters() {
     _products = _allProducts.where((product) {
-      final matchesSearch = product.name.toLowerCase().contains(
+      final search = product.name.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
 
-      final matchesCategory =
-          _selectedCategory == 'All' || product.category == _selectedCategory;
+      final category = _selectedCategory == 'All'
+          ? true
+          : product.category == _selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      return search && category;
     }).toList();
 
     sortProducts(_sortType, notify: false);
