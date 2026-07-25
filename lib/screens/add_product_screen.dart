@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../database/database_helper.dart';
 import '../models/product.dart';
+import '../services/image_service.dart';
 
 class AddProductScreen extends StatefulWidget {
   final Product? product;
@@ -19,6 +22,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _price = TextEditingController();
 
   String _category = 'Food';
+  String _imagePath = '';
 
   @override
   void initState() {
@@ -28,6 +32,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _name.text = widget.product!.name;
       _price.text = widget.product!.price.toString();
       _category = widget.product!.category;
+      _imagePath = widget.product!.imagePath;
     }
   }
 
@@ -38,28 +43,70 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final path = await ImageService.pickImage();
+
+    if (path != null) {
+      setState(() {
+        _imagePath = path;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final editing = widget.product != null;
 
     return Scaffold(
       appBar: AppBar(title: Text(editing ? 'Edit Product' : 'Add Product')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
+            padding: const EdgeInsets.all(20),
             children: [
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    backgroundImage: _imagePath.isNotEmpty
+                        ? FileImage(File(_imagePath))
+                        : null,
+                    child: _imagePath.isEmpty
+                        ? const Icon(Icons.add_a_photo_rounded, size: 36)
+                        : null,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Center(
+                child: TextButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text("Choose Image"),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
               TextFormField(
                 controller: _name,
                 decoration: const InputDecoration(
-                  labelText: 'Product Name',
-                  prefixIcon: Icon(Icons.inventory_2),
+                  labelText: "Product Name",
+                  prefixIcon: Icon(Icons.inventory_2_rounded),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? "Enter product name"
+                    : null,
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
               TextFormField(
                 controller: _price,
@@ -67,29 +114,33 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: 'Price',
-                  prefixIcon: Icon(Icons.attach_money),
+                  labelText: "Price",
+                  prefixIcon: Icon(Icons.payments_rounded),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? "Enter price"
+                    : null,
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
                 initialValue: _category,
                 decoration: const InputDecoration(
-                  labelText: 'Category',
-                  prefixIcon: Icon(Icons.category),
+                  labelText: "Category",
+                  prefixIcon: Icon(Icons.category_rounded),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'Food', child: Text('Food')),
-                  DropdownMenuItem(value: 'Drinks', child: Text('Drinks')),
-                  DropdownMenuItem(value: 'Snacks', child: Text('Snacks')),
-                  DropdownMenuItem(value: 'Goods', child: Text('Goods')),
+                  DropdownMenuItem(value: "Food", child: Text("Food")),
+                  DropdownMenuItem(value: "Drinks", child: Text("Drinks")),
+                  DropdownMenuItem(value: "Snacks", child: Text("Snacks")),
+                  DropdownMenuItem(value: "Goods", child: Text("Goods")),
                 ],
                 onChanged: (value) {
                   if (value != null) {
-                    setState(() => _category = value);
+                    setState(() {
+                      _category = value;
+                    });
                   }
                 },
               ),
@@ -98,9 +149,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
               FilledButton.icon(
                 icon: Icon(
-                  editing ? Icons.save_rounded : Icons.add_circle_outline,
+                  editing ? Icons.save_rounded : Icons.add_circle_rounded,
                 ),
-                label: Text(editing ? 'Save Changes' : 'Add Product'),
+                label: Text(editing ? "Save Changes" : "Add Product"),
                 onPressed: () async {
                   if (!_formKey.currentState!.validate()) {
                     return;
@@ -111,7 +162,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     name: _name.text.trim(),
                     price: double.parse(_price.text),
                     category: _category,
-                    imagePath: widget.product?.imagePath ?? '',
+                    imagePath: _imagePath,
                     favorite: widget.product?.favorite ?? false,
                     createdAt:
                         widget.product?.createdAt ??
@@ -125,6 +176,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   }
 
                   if (!context.mounted) return;
+
                   Navigator.pop(context);
                 },
               ),
