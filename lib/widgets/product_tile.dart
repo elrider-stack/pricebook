@@ -25,7 +25,7 @@ class ProductTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.edit_rounded),
+              leading: const Icon(Icons.edit_outlined),
               title: const Text('Edit'),
               onTap: () => Navigator.pop(context, 'edit'),
             ),
@@ -35,7 +35,10 @@ class ProductTile extends StatelessWidget {
               onTap: () => Navigator.pop(context, 'favorite'),
             ),
             ListTile(
-              leading: const Icon(Icons.delete_rounded, color: Colors.red),
+              leading: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.red,
+              ),
               title: const Text('Delete'),
               onTap: () => Navigator.pop(context, 'delete'),
             ),
@@ -121,7 +124,7 @@ class ProductTile extends StatelessWidget {
           '${product.category}\n₦${product.price.toStringAsFixed(2)}',
         ),
         isThreeLine: true,
-        trailing: const Icon(Icons.more_vert),
+        trailing: const SizedBox.shrink(),
       ),
     );
   }
