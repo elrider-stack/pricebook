@@ -21,15 +21,13 @@ class HaidarsShopApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
+        builder: (context, themeProvider, _) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: "Haidar's Shop",
-
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: themeProvider.themeMode,
-
             home: const HomeScreen(),
           );
         },
